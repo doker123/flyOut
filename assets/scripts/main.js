@@ -1,7 +1,6 @@
 let name = '';
 let game = {};
 let panel = 'start';
-
 let $ = function (domElement) {
     return document.querySelector(domElement);
 }
@@ -13,7 +12,7 @@ let nav = () => {
             case 'startGame':
                 go('game', 'd-flex');
                 break;
-            case 'restartGame':
+            case 'restart':
                 go('game', 'd-flex');
                 for(let child of $('.elements').querySelectorAll('.element'))
                     child.remove();
@@ -25,7 +24,7 @@ let nav = () => {
 let go = (page, attribute) => {
     let pages = ['start', 'game', 'end'];
     panel = page;
-    $(`#${page}`). setAttribute('class', attribute);
+    $(`#${page}`).setAttribute('class', attribute);
     pages.forEach(el => {
         if(el !== page) $(`#${el}`).setAttribute('class', 'd-none');
     })
@@ -35,7 +34,7 @@ let checkStorage = () => {
     $('#nameInput').value = localStorage.getItem('userName') || '';
 }
 
-let checkName = ()  => {
+let checkName = () => {
     name = $('#nameInput').value.trim();
     if(name !== '') {
         localStorage.setItem('userName', name);
@@ -48,7 +47,7 @@ let checkName = ()  => {
 let startLoop = () => {
     let inter = setInterval(() => {
         checkName();
-        if (panel === 'start') clearInterval(inter);
+        if(panel !== 'start') clearInterval(inter);
     }, 100)
 }
 
@@ -58,8 +57,8 @@ window.onload = () => {
     startLoop();
     setInterval(() => {
         if(panel === 'game') {
-            game = new Game()
-            game.start()
+            game = new Game();
+            game.start();
             panel = 'game process';
         }
     }, 500)
@@ -67,6 +66,6 @@ window.onload = () => {
 
 let random = (min, max) => {
     min = Math.ceil(min);
-    max = Math.ceil(max);
+    max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
