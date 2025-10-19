@@ -24,15 +24,17 @@ class Drawable {
 
     draw() {
         this.element.style = `
-        left; ${this.x}px;
-        top; ${this.y}px;
-        width: ${this.w}px;
-        height: ${this.h}px;
+            left: ${this.x}px;
+            top: ${this.y}px;
+            width: ${this.w}px;
+            height: ${this.h}px;
         `;
     }
+
     removeElement() {
         this.element.remove();
     }
+
     isCollision(element) {
         let a = {
             x1: this.x,
@@ -47,67 +49,6 @@ class Drawable {
             y2: element.y + element.h,
         }
         return a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2;
-    }
-}
-class EnemyAirplane extends Drawable {
-    constructor(game) {
-        super(game);
-        this.w = 70;
-        this.h = 70;
-        this.y = 60;
-        this.x = random(0, window.innerWidth - this.w);
-        this.offsets.y = 2;
-        this.offsets.x = random(-3, 3);
-        this.bombInterval = random(100, 200);
-        this.bombCounter = 0;
-        this.createElement();
-    }
-
-    update() {
-        // Проверка столкновения с игроком (для окончания игры или получения урона)
-        if (this.isCollision(this.game.player)) {
-            this.game.player.takeDamage(); // Предполагается, что у игрока есть метод takeDamage
-            this.takeDamage(); // Удалить самолет после столкновения
-        }
-
-        // Сброс бомбы через интервалы
-        this.bombCounter++;
-        if (this.bombCounter >= this.bombInterval) {
-            this.dropBomb();
-            this.bombCounter = 0;
-            this.bombInterval = random(100, 200); // Сброс интервала
-        }
-
-        // Изменение направления при столкновении с горизонтальными краями
-        if (this.x <= 0 || this.x + this.w >= window.innerWidth) {
-            this.offsets.x = -this.offsets.x;
-        }
-
-        super.update(); // Обновление позиции на основе смещений
-    }
-
-    dropBomb() {
-        // Создание нового объекта бомбы и добавление его в игру
-        // Предполагается существование класса Bomb
-        const bomb = new Bomb(this.game, this.x + this.w / 2, this.y + this.h); // Сброс из центра низа самолета
-        this.game.add(bomb); // Добавление бомбы в список объектов игры
-    }
-
-    takePoint() {
-        // Начисление очков при уничтожении самолета игроком (опционально)
-        if (this.game.remove(this)) {
-            this.removeElement();
-            this.game.points += 10; // Пример: 10 очков за самолет
-        }
-    }
-
-    takeDamage() {
-        // Удаление самолета при попадании пули игрока или столкновении с игроком
-        if (this.game.remove(this)) {
-            this.removeElement();
-            // Опционально уменьшить HP игрока, если самолет столкнулся с игроком
-            // this.game.hp--; // Только если это означает урон игроку
-        }
     }
 }
 
@@ -171,5 +112,132 @@ class Player extends Drawable {
                 this.game.elements[i].x -= 15;
             }
         }
+    }
+}
+
+class Game {
+    constructor() {
+        this.name = name;
+        this.elements = [];
+        this.player = this.generate(Player);
+        this.counterForTimer = 0;
+        this.fruits = [Apple, Banana, Orange];
+        this.hp = 3;
+        this.points = 0;
+        this.time = {
+            m1: 0,
+            m2: 0,
+            s1: 0,
+            s2: 0
+        };
+        this.ended = false;
+        this.pause = false;
+        this.keyEvents();
+    }
+
+    start () {
+        this.loop();
+    }
+
+    generate(className) {
+        let element = new className(this);
+        this.elements.push(element);
+        return element;
+    }
+
+    keyEvents() {
+        addEventListener('keydown', ev => {
+            if(ev.code === "Escape") this.pause = !this.pause;
+        })
+    }
+
+    loop() {
+        requestAnimationFrame(() => {
+            if(!this.pause) {
+                document.querySelectorAll('.element').forEach(el => {
+                    el.style.animationPlayState = 'running';
+                });
+                this.counterForTimer++;
+                if (this.counterForTimer % 60 === 0) {
+                    this.timer();
+                    this.randomFruitGenerate();
+                }
+                if (this.hp < 0) {
+                    this.end();
+                }
+                $('.pause').style.display = 'none';
+                this.updateElements();
+                this.setParams();
+            } else if(this.pause) {
+                $('.pause').style.display = 'flex';
+                document.querySelectorAll('.element').forEach(el => {
+                    el.style.animationPlayState = 'paused';
+                });
+            }
+            if(!this.ended) this.loop()
+        });
+    }
+
+    randomFruitGenerate() {
+        this.generate(this.fruits[random(0, 2)])
+    }
+
+    updateElements() {
+        this.elements.forEach(element => {
+            element.update();
+            element.draw();
+        })
+    }
+
+    setParams() {
+        let params = ['name', 'points', 'hp'];
+        let values = [this.name, this.points, this.hp];
+        params.forEach((param, ind) => {
+            $(`#${param}`).innerHTML = values[ind];
+        });
+    }
+
+    remove(el) {
+        let idx = this.elements.indexOf(el);
+        if(idx !== -1) {
+            this.elements.splice(idx, 1);
+            return true;
+        }
+        return false;
+
+    }
+    timer() {
+        let time = this.time;
+        time.s2++;
+        if(time.s2 >= 10) {
+            time.s2 = 0;
+            time.s1++;
+        }
+        if(time.s1 >= 6) {
+            time.s1 = 0;
+            time.m2++;
+        }
+        if(time.m2 >= 10) {
+            time.m2 = 0;
+            time.m1++;
+        }
+        $('#timer').innerHTML = `${time.m1}${time.m2}:${time.s1}${time.s2}`;
+    }
+
+    end() {
+        this.ended = true;
+        let time = this.time;
+        if((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 5) {
+            $('#playerName').innerHTML = `Поздравляем, ${this.name}!`;
+            $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
+            $('#collectedFruits').innerHTML = `Вы собрали ${this.points} фруктов`;
+            $('#congratulation').innerHTML = `Вы выиграли!`;
+        } else {
+            $('#playerName').innerHTML = `Жаль, ${this.name}!`;
+            $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
+            $('#collectedFruits').innerHTML = `Вы собрали ${this.points} фруктов`;
+            $('#congratulation').innerHTML = `Вы проиграли!`;
+        }
+        go('end', 'panel d-flex justify-content-center align-items-center');
     }
 }
