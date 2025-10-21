@@ -86,3 +86,7 @@ main {
     background-size: contain;
     transform: rotate(60deg);
 }
+.playerbullet {
+    background: url("../img/bullet.png") center no-repeat;
+    background-size: contain;
+}
