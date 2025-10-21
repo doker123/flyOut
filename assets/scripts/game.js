@@ -52,21 +52,136 @@ class Drawable {
     }
 }
 
+class EnemyAircraft extends Drawable {
+    constructor(game) {
+        super(game);
+        this.w = 60;
+        this.h = 30;
+        this.y = -this.h;
+        this.x = random(0, window.innerWidth - this.w);
+        this.offsets.y = random(1, 3);
+        this.offsets.x = random(-1, 1);
+        this.bombInterval = random(60, 180);
+        this.bombCounter = 0;
+        this.createElement();
+    }
+
+    update() {
+        if (this.isCollision(this.game.player)) {
+            this.game.player.takeDamage();
+            this.takeDamage();
+            return;
+        }
+
+        this.bombCounter++;
+        if (this.bombCounter >= this.bombInterval) {
+            this.dropBomb();
+            this.bombCounter = 0;
+            this.bombInterval = random(60, 180);
+        }
+
+        if (this.x <= 0 || this.x + this.w >= window.innerWidth) {
+            this.offsets.x *= -1; // Меняем направление X
+        }
+
+        if (this.y > window.innerHeight) {
+            this.takeDamage();
+            return;
+        }
+        super.update();
+    }
+
+    dropBomb() {
+        this.game.generate(Bomb, this.x + this.w / 2, this.y + this.h);
+    }
+
+    takePoint() {
+        if (this.game.remove(this)) {
+            this.removeElement();
+            this.game.points += 10;
+        }
+    }
+
+    takeDamage() {
+        this.game.remove(this);
+        this.removeElement();
+    }
+}
+
+class Bomb extends Drawable {
+    constructor(game, x, y) {
+        super(game);
+        this.w = 8;
+        this.h = 15;
+        this.x = x - this.w / 2;
+        this.y = y;
+        this.offsets.y = 5;
+        this.createElement();
+    }
+
+    update() {
+        if (this.isCollision(this.game.player)) {
+            this.game.player.takeDamage();
+            this.takeDamage();
+            return;
+        }
+
+
+        if (this.y > window.innerHeight) {
+            this.takeDamage();
+            return;
+        }
+
+        super.update();
+    }
+
+    takeDamage() {
+        this.game.remove(this);
+        this.removeElement();
+    }
+}
+class PlayerBullet extends Drawable {
+    constructor(game, x, y) {
+        super(game);
+        this.w = 4;
+        this.h = 10;
+        this.x = x - this.w / 2;
+        this.y = y - this.h;
+        this.offsets.y = -8;
+        this.createElement();
+    }
+
+    update() {
+        if (this.y + this.h < 0) {
+            this.takeDamage();
+            return
+        }
+
+        super.update();
+    }
+
+    takeDamage() {
+        this.game.remove(this);
+        this.removeElement();
+    }
+}
+
 class Player extends Drawable {
     constructor(game) {
         super(game);
-        this.w = 244;
-        this.h = 109;
+        this.w = 80;
+        this.h = 30;
         this.x = window.innerWidth / 2 - this.w / 2;
         this.y = window.innerHeight - this.h;
         this.speedPerFrame = 20;
-        this.skillTimer = 0;
-        this.couldTimer = 0;
         this.keys = {
             ArrowLeft: false,
             ArrowRight: false,
-            Space: false
+            Space: false,
         }
+        this.bullets = [];
+        this.shootCooldown = 0;
+        this.maxCooldown = 15;
         this.createElement();
         this.bindKeyEvents();
     }
@@ -75,42 +190,46 @@ class Player extends Drawable {
         document.addEventListener('keydown', ev => this.changeKeyStatus(ev.code, true))
         document.addEventListener('keyup', ev => this.changeKeyStatus(ev.code, false))
     }
+
     changeKeyStatus(code, value) {
-        if(code in this.keys) this.keys[code] = value;
+        if (code in this.keys) this.keys[code] = value;
     }
 
-
-
-
-    update(){
-        if(this.keys.ArrowLeft && this.x > 0) this.offsets.x = -this.speedPerFrame;
-        else if(this.keys.ArrowRight && this.x < window.innerWidth - this.w) this.offsets.x = this.speedPerFrame;
+    update() {
+        if (this.keys.ArrowLeft && this.x > 0) this.offsets.x = -this.speedPerFrame;
+        else if (this.keys.ArrowRight && this.x < window.innerWidth - this.w) this.offsets.x = this.speedPerFrame;
         else this.offsets.x = 0;
-        if(this.keys.Space && this.couldTimer === 0) {
-            this.skillTimer++;
-            $('#skill').innerHTML = `осталось ${Math.ceil((240 - this.skillTimer) / 60)}`;
-            this.applySkill();
+        super.update();
+
+        if(this.keys.Space && this.shootCooldown <= 0) {
+            this.shoot();
+            this.shootCooldown = this.maxCooldown;
         }
-        if (this.skillTimer > 240 || (!this.keys.Space && this.skillTimer > 1)) {
-            this.couldTimer++;
-            $('#skill').innerHTML = `осталось ${Math.ceil((300 - this.couldTimer)/ 60)}`;
-            this.keys.Space = false;
+
+        if (this.shootCooldown > 0) {
+            this.shootCooldown--;
         }
-        if(this.couldTimer > 300) {
-            this.couldTimer = 0;
-            this.skillTimer = 0;
-            $('#skill').innerHTML = 'готово';
-        }
+
         super.update();
     }
+    shoot() {
+        const bullet = new PlayerBullet(this.game, this.x + this.w / 2, this.y);
+        this.bullets.push(bullet);
+        this.game.elements.push(bullet);
+    }
 
-    applySkill() {
-        for(let i=1; i<this.game.elements.length; i++){
-            if(this.game.elements[i].x < this.x + (this.w / 2)) {
-                this.game.elements[i].x += 15;
-            } else if (this.game.elements[i].x < this.x + (this.w / 2)) {
-                this.game.elements[i].x -= 15;
-            }
+    removeBullet(bullet) {
+        const index = this.bullets.indexOf(bullet);
+        if (index !== -1) {
+            this.bullets.splice(index, 1);
+            bullet.removeElement()
+        }
+    }
+
+    takeDamage() {
+        this.game.hp--;
+        if (this.game.hp <= 0) {
+            this.game.end();
         }
     }
 }
@@ -121,8 +240,8 @@ class Game {
         this.elements = [];
         this.player = this.generate(Player);
         this.counterForTimer = 0;
-        this.fruits = [Apple, Banana, Orange];
-        this.hp = 3;
+        this.aircrafts = [EnemyAircraft];
+        this.hp = 5;
         this.points = 0;
         this.time = {
             m1: 0,
@@ -135,7 +254,7 @@ class Game {
         this.keyEvents();
     }
 
-    start () {
+    start() {
         this.loop();
     }
 
@@ -147,20 +266,20 @@ class Game {
 
     keyEvents() {
         addEventListener('keydown', ev => {
-            if(ev.code === "Escape") this.pause = !this.pause;
+            if (ev.code === "Escape") this.pause = !this.pause;
         })
     }
 
     loop() {
         requestAnimationFrame(() => {
-            if(!this.pause) {
+            if (!this.pause) {
                 document.querySelectorAll('.element').forEach(el => {
                     el.style.animationPlayState = 'running';
                 });
                 this.counterForTimer++;
                 if (this.counterForTimer % 60 === 0) {
                     this.timer();
-                    this.randomFruitGenerate();
+                    this.randomAircraftGenerate();
                 }
                 if (this.hp < 0) {
                     this.end();
@@ -168,18 +287,18 @@ class Game {
                 $('.pause').style.display = 'none';
                 this.updateElements();
                 this.setParams();
-            } else if(this.pause) {
+            } else if (this.pause) {
                 $('.pause').style.display = 'flex';
                 document.querySelectorAll('.element').forEach(el => {
                     el.style.animationPlayState = 'paused';
                 });
             }
-            if(!this.ended) this.loop()
+            if (!this.ended) this.loop()
         });
     }
 
-    randomFruitGenerate() {
-        this.generate(this.fruits[random(0, 2)])
+    randomAircraftGenerate() {
+        this.generate(this.aircrafts[0]);
     }
 
     updateElements() {
@@ -199,25 +318,26 @@ class Game {
 
     remove(el) {
         let idx = this.elements.indexOf(el);
-        if(idx !== -1) {
+        if (idx !== -1) {
             this.elements.splice(idx, 1);
             return true;
         }
         return false;
 
     }
+
     timer() {
         let time = this.time;
         time.s2++;
-        if(time.s2 >= 10) {
+        if (time.s2 >= 10) {
             time.s2 = 0;
             time.s1++;
         }
-        if(time.s1 >= 6) {
+        if (time.s1 >= 6) {
             time.s1 = 0;
             time.m2++;
         }
-        if(time.m2 >= 10) {
+        if (time.m2 >= 10) {
             time.m2 = 0;
             time.m1++;
         }
@@ -227,7 +347,7 @@ class Game {
     end() {
         this.ended = true;
         let time = this.time;
-        if((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 5) {
+        if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 5) {
             $('#playerName').innerHTML = `Поздравляем, ${this.name}!`;
             $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
             $('#collectedFruits').innerHTML = `Вы собрали ${this.points} фруктов`;

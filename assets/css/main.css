@@ -75,3 +75,14 @@ main {
     color: #fff;
     background-color: rgba(0, 0, 0, .5);
 }
+
+.enemyaircraft {
+    background: url("../img/aircraft.png") center no-repeat;
+    background-size: contain;
+    transform: rotate(180deg);
+}
+.bomb {
+    background: url("../img/bomb.png");
+    background-size: contain;
+    transform: rotate(60deg);
+}
