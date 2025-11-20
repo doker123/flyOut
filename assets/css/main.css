@@ -23,10 +23,10 @@ main {
 }
 
 .main {
-    background: #ffe8ba;
+    background: #a4c695;
     padding: 5vh;
     border: 3px solid #000;
-    border-radius: 2em;
+    border-radius: 5em;
 }
 
 .changeName {

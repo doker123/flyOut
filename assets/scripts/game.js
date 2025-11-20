@@ -60,7 +60,7 @@ class EnemyAircraft extends Drawable {
         this.y = -this.h;
         this.x = random(0, window.innerWidth - this.w);
         this.offsets.y = random(1, 3);
-        this.offsets.x = random(-1, 1);
+        this.offsets.x = random(-2, 2);
         this.bombInterval = random(60, 180);
         this.bombCounter = 0;
         this.createElement();
@@ -81,7 +81,7 @@ class EnemyAircraft extends Drawable {
         }
 
         if (this.x <= 0 || this.x + this.w >= window.innerWidth) {
-            this.offsets.x *= -1; // Меняем направление X
+            this.offsets.x *= -1;
         }
 
         if (this.y > window.innerHeight) {
@@ -98,7 +98,7 @@ class EnemyAircraft extends Drawable {
     takePoint() {
         if (this.game.remove(this)) {
             this.removeElement();
-            this.game.points += 10;
+            this.game.points += 1;
         }
     }
 
@@ -147,7 +147,7 @@ class PlayerBullet extends Drawable {
         this.h = 50;
         this.x = x - this.w / 2;
         this.y = y - this.h;
-        this.offsets.y = -8;
+        this.offsets.y = -6;
         this.createElement();
     }
 
@@ -246,8 +246,8 @@ class Game {
         this.points = 0;
         this.time = {
             m1: 0,
-            m2: 0,
-            s1: 3,
+            m2: 1,
+            s1: 0,
             s2: 0
         };
         this.testMode = false;
@@ -289,9 +289,8 @@ class Game {
                     if (this.hp <= 0) {
                         this.end();
                     }
-                    if (this.points >= 250) {
+                    if (this.points >= 25) {
                         this.end();
-                        return;
                     }
                 }
                 $('.pause').style.display = 'none';
@@ -375,7 +374,7 @@ class Game {
     end() {
         this.ended = true;
         let time = this.time;
-        if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 5) {
+        if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 25) {
             $('#playerName').innerHTML = `Поздравляем, ${this.name}!`;
             $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
             $('#collectedFruits').innerHTML = `Вы cбили ${this.points} самолётов `;
