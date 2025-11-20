@@ -98,7 +98,7 @@ class EnemyAircraft extends Drawable {
     takePoint() {
         if (this.game.remove(this)) {
             this.removeElement();
-            this.game.points += 10;
+            this.game.points += 1;
         }
     }
 
@@ -247,7 +247,7 @@ class Game {
         this.time = {
             m1: 0,
             m2: 0,
-            s1: 3,
+            s1: 6,
             s2: 0
         };
         this.testMode = false;
@@ -289,7 +289,7 @@ class Game {
                     if (this.hp <= 0) {
                         this.end();
                     }
-                    if (this.points >= 250) {
+                    if (this.points >= 25) {
                         this.end();
                         return;
                     }
@@ -375,7 +375,7 @@ class Game {
     end() {
         this.ended = true;
         let time = this.time;
-        if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 5) {
+        if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 25) {
             $('#playerName').innerHTML = `Поздравляем, ${this.name}!`;
             $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
             $('#collectedFruits').innerHTML = `Вы cбили ${this.points} самолётов `;
