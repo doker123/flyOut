@@ -92,7 +92,7 @@ class EnemyAircraft extends Drawable {
     }
 
     dropBomb() {
-        this.game.generate(Bomb, this.x + this.w / 2, this.y + this.h);
+        this.game.generate(Bomb, this.x + this.w / 2, this.y + this.h / 2);
     }
 
     takePoint() {
@@ -283,7 +283,7 @@ class Game {
                     this.timer();
                     this.randomAircraftGenerate();
                 }
-                if (name.toLowerCase() === 'tester'){
+                if (name.toLowerCase() === 'tester' || name.toLowerCase() ==='тестер'){
                     this.testMode = true;
                 } else {
                     if (this.hp <= 0) {
