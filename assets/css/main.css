@@ -39,6 +39,9 @@ main {
     overflow: hidden;
     position: relative;
 }
+#end h2 {
+    color: aliceblue;
+}
 
 .info {
     position: fixed;

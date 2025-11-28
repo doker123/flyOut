@@ -377,7 +377,7 @@ class Game {
         if ((time.s1 >= 1 || time.m2 >= 1 || time.m1 >= 1) && this.points >= 25) {
             $('#playerName').innerHTML = `Поздравляем, ${this.name}!`;
             $('#endTime').innerHTML = `Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`;
-            $('#collectedFruits').innerHTML = `Вы cбили ${this.points} самолётов `;
+            $('#collectedFruits').innerHTML = `Вы уничтожили ${this.points} самолётов `;
             $('#congratulation').innerHTML = `Вы выиграли!`;
         } else {
             $('#playerName').innerHTML = `Жаль, ${this.name}!`;
